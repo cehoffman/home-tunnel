@@ -1,0 +1,37 @@
+box:
+  id: alpine
+  cmd: /bin/sh
+
+build:
+  steps:
+    - script:
+        name: install dependencies
+        code: |
+          apk --update add openssh
+          mv known_hosts /etc/ssh/ssh_known_hosts
+          mkdir /root/.ssh/
+          mv tunnel.conf /root/.ssh/config
+          chmod 600 /root/.ssh/config
+
+    - internal/docker-push:
+        username: cehoffman+wercker
+        password: $QUAY_ROBOT_PASSWORD
+        ports: "8080/tcp,8081/tcp"
+        entrypoint: /usr/bin/ssh
+        cmd: -nNTvv home
+        tag: $WERCKER_GIT_BRANCH-$WERCKER_GIT_COMMIT
+        repository: quay.io/cehoffman/home-tunnel
+        registry: https://quay.io/v2
+
+deploy:
+  box: google/cloud-sdk
+  steps:
+    - bash-template
+
+    - script:
+        name: deploy
+        code: |
+          echo "$GKE_AUTH_JSON" > /auth.json
+          gcloud auth activate-service-account --key-file /auth.json
+          gcloud container clusters get-credentials $GKE_CLUSTER --zone $GKE_ZONE --project $GKE_PROJECT
+          kubectl apply -f deployment.yml
