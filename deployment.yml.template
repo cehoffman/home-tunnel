@@ -20,16 +20,16 @@ spec:
       - name: ssh-connection
         image: quay.io/cehoffman/home-tunnel:${WERCKER_GIT_BRANCH}-${WERCKER_GIT_COMMIT}
         ports:
-        - name: sabnzbd
+        - name: http-sab
           containerPort: 8080
           protocol: TCP
-        - name: sickbeard
+        - name: http-sb
           containerPort: 8081
           protocol: TCP
-        - name: couchpotato
+        - name: http-cp
           containerPort: 8082
           protocol: TCP
-        - name: bittorrent
+        - name: http-bt
           containerPort: 8083
           protocol: TCP
         volumeMounts:
@@ -43,6 +43,174 @@ spec:
           limits:
             cpu: "20m"
             memory: "4Mi"
+      - name: oauth2-proxy-sab
+        image: quay.io/cehoffman/oauth2_proxy
+        env:
+        - name: OAUTH2_PROXY_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: home-tunnel-auth-sab
+              key: github_client_id
+        - name: OAUTH2_PROXY_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: home-tunnel-auth-sab
+              key: github_client_secret
+        - name: OAUTH2_PROXY_COOKIE_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: home-tunnel-auth-sab
+              key: cookie_secret
+        args:
+          - "-upstream=http://localhost:8080/"
+          - "-provider=github"
+          - "-cookie-secure=true"
+          - "-cookie-httponly"
+          - "-cookie-expire=168h0m"
+          - "-cookie-refresh=60m"
+          - "-cookie-domain=sab.ceh.im"
+          - "-http-address=0.0.0.0:4180"
+          - "-redirect-url=https://sab.ceh.im/oauth2/callback"
+          - "-email-domain=ceh.im"
+          - "-request-logging"
+          - "-skip-auth-preflight"
+          - "-skip-provider-button"
+        ports:
+        - name: sabnzbd
+          containerPort: 4180
+        resources:
+          requests:
+            memory: "10Mi"
+            cpu: "50m"
+          limits:
+            cpu: "100m"
+            memory: "25Mi"
+      - name: oauth2-proxy-sb
+        image: quay.io/cehoffman/oauth2_proxy
+        env:
+        - name: OAUTH2_PROXY_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: home-tunnel-auth-sb
+              key: github_client_id
+        - name: OAUTH2_PROXY_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: home-tunnel-auth-sb
+              key: github_client_secret
+        - name: OAUTH2_PROXY_COOKIE_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: home-tunnel-auth-sb
+              key: cookie_secret
+        args:
+          - "-upstream=http://localhost:8081/"
+          - "-provider=github"
+          - "-cookie-secure=true"
+          - "-cookie-httponly"
+          - "-cookie-expire=168h0m"
+          - "-cookie-refresh=60m"
+          - "-cookie-domain=sb.ceh.im"
+          - "-http-address=0.0.0.0:4181"
+          - "-redirect-url=https://sb.ceh.im/oauth2/callback"
+          - "-email-domain=ceh.im"
+          - "-request-logging"
+          - "-skip-auth-preflight"
+          - "-skip-provider-button"
+        ports:
+        - name: sickbeard
+          containerPort: 4181
+        resources:
+          requests:
+            memory: "10Mi"
+            cpu: "50m"
+          limits:
+            cpu: "100m"
+            memory: "25Mi"
+      - name: oauth2-proxy-cp
+        image: quay.io/cehoffman/oauth2_proxy
+        env:
+        - name: OAUTH2_PROXY_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: home-tunnel-auth-cp
+              key: github_client_id
+        - name: OAUTH2_PROXY_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: home-tunnel-auth-cp
+              key: github_client_secret
+        - name: OAUTH2_PROXY_COOKIE_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: home-tunnel-auth-cp
+              key: cookie_secret
+        args:
+          - "-upstream=http://localhost:8082/"
+          - "-provider=github"
+          - "-cookie-secure=true"
+          - "-cookie-httponly"
+          - "-cookie-expire=168h0m"
+          - "-cookie-refresh=60m"
+          - "-cookie-domain=cp.ceh.im"
+          - "-http-address=0.0.0.0:4182"
+          - "-redirect-url=https://cp.ceh.im/oauth2/callback"
+          - "-email-domain=ceh.im"
+          - "-request-logging"
+          - "-skip-auth-preflight"
+          - "-skip-provider-button"
+        ports:
+        - name: couchpotato
+          containerPort: 4182
+        resources:
+          requests:
+            memory: "10Mi"
+            cpu: "50m"
+          limits:
+            cpu: "100m"
+            memory: "25Mi"
+      - name: oauth2-proxy-bt
+        image: quay.io/cehoffman/oauth2_proxy
+        env:
+        - name: OAUTH2_PROXY_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: home-tunnel-auth-bt
+              key: github_client_id
+        - name: OAUTH2_PROXY_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: home-tunnel-auth-bt
+              key: github_client_secret
+        - name: OAUTH2_PROXY_COOKIE_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: home-tunnel-auth-bt
+              key: cookie_secret
+        args:
+          - "-upstream=http://localhost:8083/"
+          - "-provider=github"
+          - "-cookie-secure=true"
+          - "-cookie-httponly"
+          - "-cookie-expire=168h0m"
+          - "-cookie-refresh=60m"
+          - "-cookie-domain=bt.ceh.im"
+          - "-http-address=0.0.0.0:4183"
+          - "-redirect-url=https://bt.ceh.im/oauth2/callback"
+          - "-email-domain=ceh.im"
+          - "-request-logging"
+          - "-skip-auth-preflight"
+          - "-skip-provider-button"
+        ports:
+        - name: bittorrent
+          containerPort: 4183
+        resources:
+          requests:
+            memory: "10Mi"
+            cpu: "50m"
+          limits:
+            cpu: "100m"
+            memory: "25Mi"
       volumes:
       - name: key
         secret:
@@ -90,7 +258,7 @@ spec:
     secretName: home-server-sab
   - hosts:
     - sb.ceh.im
-    secretName: home-server
+    secretName: home-server-sb
   - hosts:
     - cp.ceh.im
     secretName: home-server-cp

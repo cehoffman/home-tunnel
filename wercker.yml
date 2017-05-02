@@ -18,7 +18,7 @@ build:
         password: $QUAY_ROBOT_PASSWORD
         ports: "8080/tcp,8081/tcp"
         entrypoint: /usr/bin/ssh
-        cmd: -nNTvv home
+        cmd: -nNTv home
         tag: $WERCKER_GIT_BRANCH-$WERCKER_GIT_COMMIT
         repository: quay.io/cehoffman/home-tunnel
         registry: https://quay.io/v2
