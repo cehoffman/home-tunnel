@@ -69,10 +69,10 @@ spec:
   - name: couchpotato
     port: 8082
     protocol: TCP
-    containerPort: 8082
+    targetPort: 8082
   - name: bittorrent
     port: 8083
-    containerPort: 8083
+    targetPort: 8083
     protocol: TCP
   selector:
     app: home-tunnel
@@ -82,12 +82,27 @@ apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
   name: home-tunnel
+  annotations:
+    kubernetes.io/tls-acme: "true"
+    kubernetes.io/ingress.class: "gce"
 spec:
+  tls:
+  - hosts:
+    # - sab.ceh.im
+    - sb.ceh.im
+    secretName: home-server
   rules:
-  - http:
+  - host: sab.ceh.im
+    http:
       paths:
       - path: /
-        host: sab.ceh.im
         backend:
           serviceName: home-tunnel
           servicePort: 8080
+  - host: sb.ceh.im
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: home-tunnel
+          servicePort: 8082
