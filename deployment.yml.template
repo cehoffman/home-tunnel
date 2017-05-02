@@ -17,7 +17,7 @@ spec:
         commit: ${WERCKER_GIT_COMMIT}
     spec:
       containers:
-      - name: sshd-server
+      - name: ssh-connection
         image: quay.io/cehoffman/home-tunnel:${WERCKER_GIT_BRANCH}-${WERCKER_GIT_COMMIT}
         ports:
         - name: sabnzbd
@@ -55,28 +55,26 @@ metadata:
   name: home-tunnel
   labels:
     app: home-tunnel
-    commit: ${WERCKER_GIT_COMMIT}
 spec:
   ports:
   - name: sabnzbd
-    port: 8080
+    port: 3000
     protocol: TCP
-    targetPort: 8080
+    targetPort: sabnzbd
   - name: sickbeard
-    port: 8081
+    port: 3001
     protocol: TCP
-    targetPort: 8081
+    targetPort: sickbeard
   - name: couchpotato
-    port: 8082
+    port: 3002
     protocol: TCP
-    targetPort: 8082
+    targetPort: couchpotato
   - name: bittorrent
-    port: 8083
-    targetPort: 8083
+    port: 3003
+    targetPort: bittorrent
     protocol: TCP
   selector:
     app: home-tunnel
-    commit: ${WERCKER_GIT_COMMIT}
 ---
 apiVersion: extensions/v1beta1
 kind: Ingress
@@ -84,13 +82,21 @@ metadata:
   name: home-tunnel
   annotations:
     kubernetes.io/tls-acme: "true"
-    kubernetes.io/ingress.class: "gce"
+    kubernetes.io/ingress.class: "nginx"
 spec:
   tls:
   - hosts:
-    # - sab.ceh.im
+    - sab.ceh.im
+    secretName: home-server-sab
+  - hosts:
     - sb.ceh.im
     secretName: home-server
+  - hosts:
+    - cp.ceh.im
+    secretName: home-server-cp
+  - hosts:
+    - bt.ceh.im
+    secretName: home-server-bt
   rules:
   - host: sab.ceh.im
     http:
@@ -98,11 +104,25 @@ spec:
       - path: /
         backend:
           serviceName: home-tunnel
-          servicePort: 8080
+          servicePort: sabnzbd
   - host: sb.ceh.im
     http:
       paths:
       - path: /
         backend:
           serviceName: home-tunnel
-          servicePort: 8082
+          servicePort: sickbeard
+  - host: cp.ceh.im
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: home-tunnel
+          servicePort: couchpotato
+  - host: bt.ceh.im
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: home-tunnel
+          servicePort: bittorrent
