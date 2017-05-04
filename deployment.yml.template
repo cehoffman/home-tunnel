@@ -44,7 +44,7 @@ spec:
             cpu: "20m"
             memory: "4Mi"
       - name: oauth2-proxy-sab
-        image: quay.io/cehoffman/oauth2_proxy
+        image: quay.io/cehoffman/oauth2_proxy:2d21e7783f60c46e95dad22901730abe4697e6fe
         env:
         - name: OAUTH2_PROXY_CLIENT_ID
           valueFrom:
@@ -86,7 +86,7 @@ spec:
             cpu: "100m"
             memory: "25Mi"
       - name: oauth2-proxy-sb
-        image: quay.io/cehoffman/oauth2_proxy
+        image: quay.io/cehoffman/oauth2_proxy:2d21e7783f60c46e95dad22901730abe4697e6fe
         env:
         - name: OAUTH2_PROXY_CLIENT_ID
           valueFrom:
@@ -128,7 +128,7 @@ spec:
             cpu: "100m"
             memory: "25Mi"
       - name: oauth2-proxy-cp
-        image: quay.io/cehoffman/oauth2_proxy
+        image: quay.io/cehoffman/oauth2_proxy:2d21e7783f60c46e95dad22901730abe4697e6fe
         env:
         - name: OAUTH2_PROXY_CLIENT_ID
           valueFrom:
@@ -170,7 +170,7 @@ spec:
             cpu: "100m"
             memory: "25Mi"
       - name: oauth2-proxy-bt
-        image: quay.io/cehoffman/oauth2_proxy
+        image: quay.io/cehoffman/oauth2_proxy:2d21e7783f60c46e95dad22901730abe4697e6fe
         env:
         - name: OAUTH2_PROXY_CLIENT_ID
           valueFrom:
