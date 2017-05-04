@@ -32,6 +32,9 @@ spec:
         - name: http-bt
           containerPort: 8083
           protocol: TCP
+        - name: http-plex
+          containerPort: 32400
+          protocol: TCP
         volumeMounts:
         - name: key
           mountPath: /root/.ssh/key
@@ -211,6 +214,48 @@ spec:
           limits:
             cpu: "100m"
             memory: "25Mi"
+      - name: oauth2-proxy-plex
+        image: quay.io/cehoffman/oauth2_proxy:2d21e7783f60c46e95dad22901730abe4697e6fe
+        env:
+        - name: OAUTH2_PROXY_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: home-tunnel-auth-plex
+              key: github_client_id
+        - name: OAUTH2_PROXY_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: home-tunnel-auth-plex
+              key: github_client_secret
+        - name: OAUTH2_PROXY_COOKIE_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: home-tunnel-auth-plex
+              key: cookie_secret
+        args:
+          - "-upstream=http://localhost:32400/"
+          - "-provider=github"
+          - "-cookie-secure=true"
+          - "-cookie-httponly"
+          - "-cookie-expire=168h0m"
+          - "-cookie-refresh=60m"
+          - "-cookie-domain=plex.ceh.im"
+          - "-http-address=0.0.0.0:4184"
+          - "-redirect-url=https://plex.ceh.im/oauth2/callback"
+          - "-email-domain=ceh.im"
+          - "-request-logging"
+          - "-skip-auth-preflight"
+          - "-skip-provider-button"
+        ports:
+        - name: plex
+          containerPort: 4184
+        resources:
+          requests:
+            memory: "10Mi"
+            cpu: "50m"
+          limits:
+            cpu: "100m"
+            memory: "25Mi"
       volumes:
       - name: key
         secret:
@@ -241,6 +286,10 @@ spec:
     port: 3003
     targetPort: bittorrent
     protocol: TCP
+  - name: plex
+    port: 3004
+    targetPort: plex
+    protocol: TCP
   selector:
     app: home-tunnel
 ---
@@ -265,6 +314,9 @@ spec:
   - hosts:
     - bt.ceh.im
     secretName: home-server-bt
+  - hosts:
+    - plex.ceh.im
+    secretName: home-server-plex
   rules:
   - host: sab.ceh.im
     http:
@@ -294,3 +346,10 @@ spec:
         backend:
           serviceName: home-tunnel
           servicePort: bittorrent
+  - host: plex.ceh.im
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: home-tunnel
+          servicePort: plex
