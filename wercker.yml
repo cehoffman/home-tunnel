@@ -14,24 +14,33 @@ build:
           chmod 600 /root/.ssh/config
 
     - internal/docker-push:
-        username: cehoffman+wercker
-        password: $QUAY_ROBOT_PASSWORD
+        username: $QUAY_USER
+        password: $QUAY_PASSWORD
         ports: "8080/tcp,8081/tcp"
         entrypoint: /usr/bin/ssh
         cmd: -nNTv home
         tag: $WERCKER_GIT_BRANCH-$WERCKER_GIT_COMMIT
-        repository: quay.io/cehoffman/home-tunnel
-        registry: https://quay.io/v2
+        repository: cr.vertiv.life/cehoffman/home-tunnel
+        registry: https://cr.vertiv.life/v2
 
 deploy:
-  box: google/cloud-sdk
+  box:
+    id: cr.vertiv.life/cehoffman/k8s-deploy
+    username: $QUAY_USER
+    password: $QUAY_PASSWORD
+    tag: latest
   steps:
     - bash-template
 
     - script:
         name: deploy
         code: |
-          echo "$GKE_AUTH_JSON" > /auth.json
-          gcloud auth activate-service-account --key-file /auth.json
-          gcloud container clusters get-credentials $GKE_CLUSTER --zone $GKE_ZONE --project $GKE_PROJECT
-          kubectl apply -f deployment.yml
+          [ -z "$KUBE_CA_PEM_FILE" ] && export KUBE_CA_PEM_FILE=/tmp/ca.crt
+          [ -n "$KUBE_CA_PEM" ] && echo "$KUBE_CA_PEM" > "$KUBE_CA_PEM_FILE"
+          kubectl config set-cluster "$WERCKER_MAIN_PIPELINE_STARTED" --server="$KUBE_URL" --certificate-authority="$KUBE_CA_PEM_FILE" --embed-certs=true
+          kubectl config set-credentials "$WERCKER_MAIN_PIPELINE_STARTED" --token="$KUBE_TOKEN"
+          kubectl config set-context "$WERCKER_MAIN_PIPELINE_STARTED" --cluster="$WERCKER_MAIN_PIPELINE_STARTED" --user="$WERCKER_MAIN_PIPELINE_STARTED" --namespace="$KUBE_NAMESPACE"
+          kubectl config use-context "$WERCKER_MAIN_PIPELINE_STARTED"
+          ping -c 3 k8s.ceh.im
+          k cluster-info
+          k apply -f deployment.yml

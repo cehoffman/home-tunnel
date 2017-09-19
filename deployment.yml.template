@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
       - name: ssh-connection
-        image: quay.io/cehoffman/home-tunnel:${WERCKER_GIT_BRANCH}-${WERCKER_GIT_COMMIT}
+        image: cr.vertiv.life/cehoffman/home-tunnel:${WERCKER_GIT_BRANCH}-${WERCKER_GIT_COMMIT}
         ports:
         - name: http-sab
           containerPort: 8080
