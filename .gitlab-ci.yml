@@ -1,0 +1,38 @@
+image: cr.vertiv.life/cehoffman/k8s-deploy
+
+stages:
+  - build
+  - deploy
+
+variables:
+  IMAGE: cr.vertiv.life/$CI_PROJECT_PATH:$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA
+
+build:
+  stage: build
+  image: docker
+  services:
+    - docker:dind
+  tags:
+    - docker
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+  before_script:
+    - docker login -u $QUAY_USER -p $QUAY_PASSWORD cr.vertiv.life
+  script:
+    - docker build -t $IMAGE .
+    - docker push $IMAGE
+  only:
+    - master
+
+deploy:
+  stage: deploy
+  before_script:
+    - k8s-login
+  script:
+    - envsubst -no-empty -no-unset < deployment.yml.template > deployment.yaml
+    - kubectl apply -f deployment.yaml
+    - kubectl rollout status -w deployment/$CI_ENVIRONMENT_SLUG
+  only:
+    - master
+  environment:
+    name: digitalocean

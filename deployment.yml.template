@@ -1,24 +1,24 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: home-tunnel
+  name: $CI_ENVIRONMENT_SLUG
   labels:
-    commit: ${WERCKER_GIT_COMMIT}
+    commit: ${CI_COMMIT_SHA}
 spec:
   revisionHistoryLimit: 1
   replicas: 1
   selector:
     matchLabels:
-      app: home-tunnel
+      app: $CI_ENVIRONMENT_SLUG
   template:
     metadata:
       labels:
-        app: home-tunnel
-        commit: ${WERCKER_GIT_COMMIT}
+        app: $CI_ENVIRONMENT_SLUG
+        commit: ${CI_COMMIT_SHA}
     spec:
       containers:
       - name: ssh-connection
-        image: cr.vertiv.life/cehoffman/home-tunnel:${WERCKER_GIT_BRANCH}-${WERCKER_GIT_COMMIT}
+        image: cr.vertiv.life/cehoffman/home-tunnel:${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHA}
         ports:
         - name: http-sab
           containerPort: 8080
@@ -291,7 +291,7 @@ spec:
     targetPort: plex
     protocol: TCP
   selector:
-    app: home-tunnel
+    app: $CI_ENVIRONMENT_SLUG
 ---
 apiVersion: extensions/v1beta1
 kind: Ingress
